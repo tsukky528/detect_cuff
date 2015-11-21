@@ -29,7 +29,7 @@ bool sameEdge(Edge &edge1, Edge &edge2) {
 
 int main(int argc, const char * argv[]) {
     
-    string cloth0_path = "halfpants2.json";
+    string cloth0_path = "md_pants_cuff2.json";
     int num_verts;
     int num_faces;
     
@@ -145,9 +145,53 @@ int main(int argc, const char * argv[]) {
         cuffs.push_back(cuff);
     }
     
-    cout << cuffs[0].size() << endl;
-    cout << cuffs[1].size() << endl;
-    cout << cuffs[2].size() << endl;
+    for (vector<Edge> cuff : cuffs) {
+        cout << cuff.size() << endl;
+    }
+    
+    vector<float> averages;;
+    vector<pair<float, int>> tmp_averages;
+    vector<float> maxs;
+    vector<float> tmp_maxs;
+    vector<float> mins;
+    vector<float> tmp_mins;
+    vector<vector<Edge>> real_cuffs;
+    
+    for (int i = 0; i < cuffs.size(); i++) {
+        float sum = 0.0;
+        float average;
+        float max = -100.0;
+        float min = 1000.0;
+        for (int j = 0; j < cuffs[i].size(); j++) {
+            float p1 = verts[cuffs[i][j].p1].y;
+            float p2 = verts[cuffs[i][j].p2].y;
+            sum += p1;
+            sum += p2;
+            if (max < p1) max = p1;
+            if (max < p2) max = p2;
+            if (min > p1) min = p1;
+            if (min > p2) min = p1;
+        }
+        average = sum / (2*cuffs[i].size());
+        tmp_averages.push_back(make_pair(average, i));
+        tmp_maxs.push_back(max);
+        tmp_mins.push_back(min);
+        cout << "average:" << average << " max:" << max << " min:" << min << endl;
+    }
+    
+    sort(tmp_averages.begin(), tmp_averages.end(), greater<pair<float, int>>());
+    
+    
+    for (pair<float, int> ave : tmp_averages) {
+        averages.push_back(ave.first);
+        int i = ave.second;
+        maxs.push_back(tmp_maxs[i]);
+        mins.push_back(tmp_mins[i]);
+        real_cuffs.push_back(cuffs[i]);
+        cout << ave.second << " : " << ave.first << endl;
+    }
+    
+
     
     object o;
     o = c0v.get<object>();
@@ -161,15 +205,35 @@ int main(int argc, const char * argv[]) {
     o.insert(make_pair("edges", value(ar0)));
     
     // cuff要素追加
-    for (int i = 0; i < cuffs.size(); i++) {
+    for (int i = 0; i < real_cuffs.size(); i++) {
         picojson::array ar;
-        for (int j = 0; j < cuffs[i].size(); j++) {
-            ar.push_back(value(float(cuffs[i][j].p1)));
-            ar.push_back(value(float(cuffs[i][j].p2)));
+        for (int j = 0; j < real_cuffs[i].size(); j++) {
+            ar.push_back(value(float(real_cuffs[i][j].p1)));
+            ar.push_back(value(float(real_cuffs[i][j].p2)));
         }
         string name = "cuff" + to_string(i);
         o.insert(make_pair(name, value(ar)));
     }
+    
+    picojson::array min_ar;
+    for (int i = 0; i < mins.size(); i++) {
+        min_ar.push_back(value(float(mins[i])));
+    }
+    o.insert(make_pair("min", value(min_ar)));
+    
+    picojson::array max_ar;
+    for (int i = 0; i < maxs.size(); i++) {
+        max_ar.push_back(value(float(maxs[i])));
+    }
+    o.insert(make_pair("max", value(max_ar)));
+    
+    picojson::array ave_ar;
+    for (int i = 0; i < averages.size(); i++) {
+        ave_ar.push_back(value(float(averages[i])));
+    }
+    o.insert(make_pair("average", value(ave_ar)));
+    
+    
     
     value v(o);
     string resultString = v.serialize().c_str();
