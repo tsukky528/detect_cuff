@@ -17,6 +17,7 @@
 #include "Triangle.h"
 #include "vector"
 #include "Edge.h"
+#include "objLoader.h"
 
 using namespace std;
 using namespace picojson;
@@ -29,59 +30,30 @@ bool sameEdge(Edge &edge1, Edge &edge2) {
 
 int main(int argc, const char * argv[]) {
     
-    string cloth0_path = "md_pants_cuff2.json";
-    int num_verts;
-    int num_faces;
+    string filename = "sapeur_tshirt.obj";
     
     vector<glm::vec3> verts;
-    vector<Triangle> faces;
+    vector<glm::vec3> normals;
+    vector<unsigned int> faces;
+    
+    bool res = sapobj::loadOBJ(filename.c_str(), verts, faces, normals);
+
     vector<Edge> edges;
     vector<Edge> cuff_edges;
     
-    stringstream ss;
-    ifstream inf;
-    ofstream outf;
-
-    
-    // 服群を読み込む。ない場合は0を入れる(これはまだ)
-    inf.open(cloth0_path.c_str(), ios::binary);
-    if (!inf.is_open()) return 1;
-    ss << inf.rdbuf();
-    inf.close();
-    
-    value c0v;
-    ss >> c0v;
-    string err = get_last_error();
-    if(!err.empty()) {
-        cerr << err << endl;
-        return -1;
-    }
-    
-    picojson::array& cloth0VArray = c0v.get<object>()["vertices"].get<picojson::array>();
-    picojson::array& cloth0FArray = c0v.get<object>()["faces"].get<picojson::array>();
-    num_verts = (int) cloth0VArray.size() / 3;
-    num_faces = (int) cloth0FArray.size() / 4;
-
-    for(int m = 0; m < num_verts; m++){
-        float x = cloth0VArray[m * 3].get<double>();
-        float y = cloth0VArray[m * 3 + 1].get<double>();
-        float z = cloth0VArray[m * 3 + 2].get<double>();
-        verts.push_back(glm::vec3(x, y ,z));
-    }
-    
-    for(int n = 1; n < cloth0FArray.size(); n+=4){
-        int p1 = (int) cloth0FArray[n].get<double>();
-        int p2 = (int) cloth0FArray[n+1].get<double>();
-        int p3 = (int) cloth0FArray[n+2].get<double>();
-        int fn = (n-1)/4;
-        Edge edge1 = Edge(p1, p2, fn);
-        Edge edge2 = Edge(p2, p3, fn);
-        Edge edge3 = Edge(p1, p3, fn);
+    for(int n = 0; n < faces.size(); n+=3){
+        
+        int p1 = faces[n];
+        int p2 = faces[n+1];
+        int p3 = faces[n+2];
+        int i = n/3;
+        Edge edge1 = Edge(p1, p2, i);
+        Edge edge2 = Edge(p2, p3, i);
+        Edge edge3 = Edge(p1, p3, i);
         edges.push_back(edge1);
         edges.push_back(edge2);
         edges.push_back(edge3);
         
-        faces.push_back(Triangle(p1, p2, p3));
     }
     
     // cuffの要素の抽出
@@ -149,7 +121,7 @@ int main(int argc, const char * argv[]) {
         cout << cuff.size() << endl;
     }
     
-    vector<float> averages;;
+    vector<float> averages;
     vector<pair<float, int>> tmp_averages;
     vector<float> maxs;
     vector<float> tmp_maxs;
@@ -176,7 +148,6 @@ int main(int argc, const char * argv[]) {
         tmp_averages.push_back(make_pair(average, i));
         tmp_maxs.push_back(max);
         tmp_mins.push_back(min);
-        cout << "average:" << average << " max:" << max << " min:" << min << endl;
     }
     
     sort(tmp_averages.begin(), tmp_averages.end(), greater<pair<float, int>>());
@@ -188,59 +159,39 @@ int main(int argc, const char * argv[]) {
         maxs.push_back(tmp_maxs[i]);
         mins.push_back(tmp_mins[i]);
         real_cuffs.push_back(cuffs[i]);
-        cout << ave.second << " : " << ave.first << endl;
     }
     
-
+    stringstream ss;
+    ifstream inf;
+    ofstream outf;
     
-    object o;
-    o = c0v.get<object>();
     
-    // pure_edges要素追加
-    picojson::array ar0;
-    for (int i = 0; i < pure_edges.size(); i++) {
-        ar0.push_back(value(float(pure_edges[i].p1)));
-        ar0.push_back(value(float(pure_edges[i].p2)));
-    }
-    o.insert(make_pair("edges", value(ar0)));
+    // 服群を読み込む。ない場合は0を入れる(これはまだ)
+    outf.open(filename.c_str(), ios::app);
+    if (!outf.is_open()) return 1;
     
-    // cuff要素追加
+//    for (int i = 0; i < edges.size(); i++) {
+//        outf << "edge " << edges[i].p1 << " " << edges[i].p2 << endl;
+//    }
+    
     for (int i = 0; i < real_cuffs.size(); i++) {
-        picojson::array ar;
         for (int j = 0; j < real_cuffs[i].size(); j++) {
-            ar.push_back(value(float(real_cuffs[i][j].p1)));
-            ar.push_back(value(float(real_cuffs[i][j].p2)));
+            outf << "c" << i << " " << real_cuffs[i][j].p1 << " " << real_cuffs[i][j].p2 << endl;
         }
-        string name = "cuff" + to_string(i);
-        o.insert(make_pair(name, value(ar)));
     }
     
-    picojson::array min_ar;
     for (int i = 0; i < mins.size(); i++) {
-        min_ar.push_back(value(float(mins[i])));
+        outf << "mi " << mins[i] << endl;
     }
-    o.insert(make_pair("min", value(min_ar)));
     
-    picojson::array max_ar;
     for (int i = 0; i < maxs.size(); i++) {
-        max_ar.push_back(value(float(maxs[i])));
+        outf << "ma " << maxs[i] << endl;
     }
-    o.insert(make_pair("max", value(max_ar)));
     
-    picojson::array ave_ar;
     for (int i = 0; i < averages.size(); i++) {
-        ave_ar.push_back(value(float(averages[i])));
+        outf << "av " << averages[i] << endl;
     }
-    o.insert(make_pair("average", value(ave_ar)));
     
-    
-    
-    value v(o);
-    string resultString = v.serialize().c_str();
-    cout << resultString << endl;
-    
-    ofstream ofs( cloth0_path, ios::out | ios::trunc );
-    ofs << resultString << std::endl;
     
     return 0;
 }
