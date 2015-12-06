@@ -28,6 +28,7 @@
 		CECEFED31BCD14830034D10E /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		CECEFED41BCD17BD0034D10E /* Triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Triangle.h; sourceTree = "<group>"; };
 		CECEFED51BCD31050034D10E /* Edge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Edge.h; sourceTree = "<group>"; };
+		CEDB8A521C11EC6400BFA6CC /* objLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = objLoader.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +61,7 @@
 		CECEFECB1BCD142D0034D10E /* detect_cuff */ = {
 			isa = PBXGroup;
 			children = (
+				CEDB8A521C11EC6400BFA6CC /* objLoader.h */,
 				CECEFED41BCD17BD0034D10E /* Triangle.h */,
 				CECEFED31BCD14830034D10E /* picojson.h */,
 				CECEFECC1BCD142D0034D10E /* main.cpp */,

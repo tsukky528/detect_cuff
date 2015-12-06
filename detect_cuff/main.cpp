@@ -30,7 +30,7 @@ bool sameEdge(Edge &edge1, Edge &edge2) {
 
 int main(int argc, const char * argv[]) {
     
-    string filename = "sapeur_tshirt.obj";
+    string filename = "md_pants.obj";
     
     vector<glm::vec3> verts;
     vector<glm::vec3> normals;
